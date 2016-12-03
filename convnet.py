@@ -56,7 +56,7 @@ class ConvNet(object):
             # PUT YOUR CODE HERE  #
             ########################
             with tf.variable_scope("conv1"):
-                kernel=tf.get_variable("w",[5,5,3,64],initializer=tf.contrib.layers.xavier_initializer())
+                kernel=tf.get_variable("w",[5,5,3,64],regularizer=tf.contrib.layers.l2_regularizer(0.001),initializer=tf.contrib.layers.xavier_initializer())
                 bias=tf.get_variable("b",[64],initializer=tf.constant_initializer(0.1))
                 layer=tf.nn.conv2d(x,kernel, strides=[1, 1], padding='SAME')
                 pre_activation=tf.nn.bias_add(layer,bias)
@@ -65,7 +65,7 @@ class ConvNet(object):
                 # conv1=tf.nn.max_pool(conv1,ksize=[3,3],strides=[2,2],padding='SAME')
 
             with tf.variable_scope("conv2"):
-                kernel=tf.get_variable("w",[5,5,3,64],initializer=tf.contrib.layers.xavier_initializer())
+                kernel=tf.get_variable("w",[5,5,3,64],tf.contrib.layers.l2_regularizer(0.001),initializer=tf.contrib.layers.xavier_initializer())
                 bias=tf.get_variable("b",[64],initializer=tf.constant_initializer(0.1))
                 layer=tf.nn.conv2d(x,kernel, strides=[1, 1], padding='SAME')
                 pre_activation=tf.nn.bias_add(layer,bias)
@@ -78,19 +78,19 @@ class ConvNet(object):
                 flatten=tf.contrib.layers.flatten(layer)
 
             with tf.variable_scope("fc1"):
-                kernel=tf.get_variable("w",[flatten.get_shape()[1],384],initializer=tf.contrib.layers.xavier_initializer())
+                kernel=tf.get_variable("w",[flatten.get_shape()[1],384],tf.contrib.layers.l2_regularizer(0.001),initializer=tf.contrib.layers.xavier_initializer())
                 bias=tf.get_variable("b",[384],initializer=tf.constant_initializer(0.1))
                 layer=tf.nn.relu(tf.add(tf.mat_mul(flatten,kernel),bias),name=scope.name)
 
             with tf.variable_scope("fc2"):
-                kernel=tf.get_variable("w",[384,192],initializer=tf.contrib.layers.xavier_initializer())
+                kernel=tf.get_variable("w",[384,192],tf.contrib.layers.l2_regularizer(0.001),initializer=tf.contrib.layers.xavier_initializer())
                 bias=tf.get_variable("b",[192],initializer=tf.constant_initializer(0.1))
                 layer=tf.nn.relu(tf.add(tf.mat_mul(layer,kernel),bias),name=scope.name)
 
             with tf.variable_scope("fc3"):
-                kernel=tf.get_variable("w",[192,10],initializer=tf.contrib.layers.xavier_initializer())
-                bias=tf.get_variable("b",[10],initializer=tf.constant_initializer(0.1))
-                layer=tf.add(tf.mat_mul(layer,kernel),bias,name=scope.name)
+                kernel=tf.get_variable("w",[192,self.n_classes],tf.contrib.layers.l2_regularizer(0.001),initializer=tf.contrib.layers.xavier_initializer())
+                bias=tf.get_variable("b",[self.n_classes],initializer=tf.constant_initializer(0.1))
+                layer=tf.add(tf.mat_mul(layer,kernel),bias,name=scope.name))
             
             logits=layer
             ########################
@@ -119,7 +119,7 @@ class ConvNet(object):
         ########################
         # PUT YOUR CODE HERE  #
         ########################
-        raise NotImplementedError
+
         ########################
         # END OF YOUR CODE    #
         ########################
@@ -150,7 +150,9 @@ class ConvNet(object):
         ########################
         # PUT YOUR CODE HERE  #
         ########################
-        raise NotImplementedError
+        # cross_entropy = tf.nn.sparse_softmax_cross_entropy_with_logits(logits, labels, name='cross_entropy')
+        cross_entropy = tf.nn.softmax_cross_entropy_with_logits(logits, labels, name='cross_entropy')
+        loss = tf.reduce_mean(cross_entropy, sum(tf.get_collection(tf.GraphKeys.REGULARIZATION_LOSSES)))
         ########################
         # END OF YOUR CODE    #
         ########################

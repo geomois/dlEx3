@@ -45,7 +45,47 @@ class Siamese(object):
             ########################
             # PUT YOUR CODE HERE  #
             ########################
-            raise NotImplementedError
+            # tf.cond(reuse,tf.get_variable_scope().reuse_variables(),)
+            if (reuse):
+                tf.get_variable_scope().reuse_variables()
+
+            with tf.variable_scope("conv1"):
+                kernel=tf.get_variable("w",[5,5,3,64],initializer=tf.contrib.layers.xavier_initializer())
+                bias=tf.get_variable("b",[64],initializer=tf.constant_initializer(0.1))
+                layer=tf.nn.conv2d(x,kernel, strides=[1, 1], padding='SAME')
+                pre_activation=tf.nn.bias_add(layer,bias)
+                layer=tf.nn.relu(pre_activation, scope.name)
+                layer=tf.nn.max_pool(layer,ksize=[3,3,None,None],strides=[2,2],padding='SAME')
+                # conv1=tf.nn.max_pool(conv1,ksize=[3,3],strides=[2,2],padding='SAME')
+
+            with tf.variable_scope("conv2"):
+                kernel=tf.get_variable("w",[5,5,3,64],initializer=tf.contrib.layers.xavier_initializer())
+                bias=tf.get_variable("b",[64],initializer=tf.constant_initializer(0.1))
+                layer=tf.nn.conv2d(x,kernel, strides=[1, 1], padding='SAME')
+                pre_activation=tf.nn.bias_add(layer,bias)
+                layer=tf.nn.relu(pre_activation, scope.name)
+                layer=tf.nn.max_pool(layer,ksize=[3,3,None,None],strides=[2,2],padding='SAME')
+            
+            # reshape = tf.reshape(layer, [384, -1])
+            # dim = reshape.get_shape()[1].value
+            with tf.variable_scope("flatten"):
+                flatten=tf.contrib.layers.flatten(layer)
+
+            with tf.variable_scope("fc1"):
+                kernel=tf.get_variable("w",[flatten.get_shape()[1],384],initializer=tf.contrib.layers.xavier_initializer())
+                bias=tf.get_variable("b",[384],initializer=tf.constant_initializer(0.1))
+                layer=tf.nn.relu(tf.add(tf.mat_mul(flatten,kernel),bias),name=scope.name)
+
+            with tf.variable_scope("fc2"):
+                kernel=tf.get_variable("w",[384,192],initializer=tf.contrib.layers.xavier_initializer())
+                bias=tf.get_variable("b",[192],initializer=tf.constant_initializer(0.1))
+                layer=tf.nn.relu(tf.add(tf.mat_mul(layer,kernel),bias),name=scope.name)
+            
+            with tf.variable_scope("l2_norm"):
+                layer=tf.nn.l2_normalize(layer,0, epsilon=1e-12, name=scope.name)#να τσεκάρω dim
+                # tf.nn.l2_normalize(layer,1 , epsilon=1e-12, name=scope.name)#να τσεκάρω dim
+
+            l2_out=layer
             ########################
             # END OF YOUR CODE    #
             ########################
