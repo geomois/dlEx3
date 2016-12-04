@@ -55,48 +55,78 @@ class ConvNet(object):
             ########################
             # PUT YOUR CODE HERE  #
             ########################
+            print ("x", x.get_shape())
             with tf.variable_scope("conv1"):
                 kernel=tf.get_variable("w",[5,5,3,64],regularizer=tf.contrib.layers.l2_regularizer(0.001),initializer=tf.contrib.layers.xavier_initializer())
                 bias=tf.get_variable("b",[64],initializer=tf.constant_initializer(0.1))
-                layer=tf.nn.conv2d(x,kernel, strides=[1, 1], padding='SAME')
+                self._variable_summaries(bias,tf.get_variable_scope().name+'/bias')
+                self._variable_summaries(kernel,tf.get_variable_scope().name+'/weights')
+                layer=tf.nn.conv2d(x,kernel, strides=[1,1,1,1], padding='SAME')
                 pre_activation=tf.nn.bias_add(layer,bias)
-                layer=tf.nn.relu(pre_activation, scope.name)
-                layer=tf.nn.max_pool(layer,ksize=[3,3,None,None],strides=[2,2],padding='SAME')
-                # conv1=tf.nn.max_pool(conv1,ksize=[3,3],strides=[2,2],padding='SAME')
+                layer=tf.nn.relu(pre_activation)
+                layer=tf.nn.max_pool(layer,ksize=[1,3,3,1],strides=[1,2,2,1],padding='SAME')
+                # conv1=tf.nn.max_pool(conv1,ksize=[3,3],strides=[1,2,2,1],padding='SAME')
+                tf.histogram_summary(tf.get_variable_scope().name+'/layer',layer)
 
             with tf.variable_scope("conv2"):
-                kernel=tf.get_variable("w",[5,5,3,64],tf.contrib.layers.l2_regularizer(0.001),initializer=tf.contrib.layers.xavier_initializer())
+                kernel=tf.get_variable("w",[5,5,64,64],regularizer=tf.contrib.layers.l2_regularizer(0.001),initializer=tf.contrib.layers.xavier_initializer())
                 bias=tf.get_variable("b",[64],initializer=tf.constant_initializer(0.1))
-                layer=tf.nn.conv2d(x,kernel, strides=[1, 1], padding='SAME')
+                self._variable_summaries(bias,tf.get_variable_scope().name+'/bias')
+                self._variable_summaries(kernel,tf.get_variable_scope().name+'/weights')
+                layer=tf.nn.conv2d(layer,kernel, strides=[1,1,1,1], padding='SAME')
                 pre_activation=tf.nn.bias_add(layer,bias)
-                layer=tf.nn.relu(pre_activation, scope.name)
-                layer=tf.nn.max_pool(layer,ksize=[3,3,None,None],strides=[2,2],padding='SAME')
-            
+                layer=tf.nn.relu(pre_activation)
+                layer=tf.nn.max_pool(layer,ksize=[1,3,3,1],strides=[1,2,2,1],padding='SAME')
+                tf.histogram_summary(tf.get_variable_scope().name+'/layer',layer)
+
             # reshape = tf.reshape(layer, [384, -1])
             # dim = reshape.get_shape()[1].value
             with tf.variable_scope("flatten"):
                 flatten=tf.contrib.layers.flatten(layer)
+                tf.histogram_summary(tf.get_variable_scope().name+"/layer",layer)
 
             with tf.variable_scope("fc1"):
-                kernel=tf.get_variable("w",[flatten.get_shape()[1],384],tf.contrib.layers.l2_regularizer(0.001),initializer=tf.contrib.layers.xavier_initializer())
+                kernel=tf.get_variable("w",[flatten.get_shape()[1],384],regularizer=tf.contrib.layers.l2_regularizer(0.001),initializer=tf.contrib.layers.xavier_initializer())
                 bias=tf.get_variable("b",[384],initializer=tf.constant_initializer(0.1))
-                layer=tf.nn.relu(tf.add(tf.mat_mul(flatten,kernel),bias),name=scope.name)
+                self._variable_summaries(bias,tf.get_variable_scope().name+'/bias')
+                self._variable_summaries(kernel,tf.get_variable_scope().name+'/weights')
+                layer=tf.nn.relu(tf.add(tf.matmul(flatten,kernel),bias))
+                tf.histogram_summary(tf.get_variable_scope().name+'/layer',layer)
 
             with tf.variable_scope("fc2"):
-                kernel=tf.get_variable("w",[384,192],tf.contrib.layers.l2_regularizer(0.001),initializer=tf.contrib.layers.xavier_initializer())
+                kernel=tf.get_variable("w",[384,192],regularizer=tf.contrib.layers.l2_regularizer(0.001),initializer=tf.contrib.layers.xavier_initializer())
                 bias=tf.get_variable("b",[192],initializer=tf.constant_initializer(0.1))
-                layer=tf.nn.relu(tf.add(tf.mat_mul(layer,kernel),bias),name=scope.name)
+                self._variable_summaries(bias,tf.get_variable_scope().name+'/bias')
+                self._variable_summaries(kernel,tf.get_variable_scope().name+'/weights')
+                layer=tf.nn.relu(tf.add(tf.matmul(layer,kernel),bias))
+                tf.histogram_summary(tf.get_variable_scope().name+'/layer',layer)
 
             with tf.variable_scope("fc3"):
-                kernel=tf.get_variable("w",[192,self.n_classes],tf.contrib.layers.l2_regularizer(0.001),initializer=tf.contrib.layers.xavier_initializer())
+                kernel=tf.get_variable("w",[192,self.n_classes],regularizer=tf.contrib.layers.l2_regularizer(0.001),initializer=tf.contrib.layers.xavier_initializer())
                 bias=tf.get_variable("b",[self.n_classes],initializer=tf.constant_initializer(0.1))
-                layer=tf.add(tf.mat_mul(layer,kernel),bias,name=scope.name))
+                self._variable_summaries(bias,tf.get_variable_scope().name+'/bias')
+                self._variable_summaries(kernel,tf.get_variable_scope().name+'/weights')
+                layer=tf.add(tf.matmul(layer,kernel),bias)
+                tf.histogram_summary(tf.get_variable_scope().name+'/softmax',layer)
             
             logits=layer
             ########################
             # END OF YOUR CODE    #
             ########################
         return logits
+
+
+    def _variable_summaries(self,var, name):
+        with tf.name_scope('summaries'):
+            mean = tf.reduce_mean(var)
+            tf.scalar_summary('mean/' + name, mean)
+            with tf.name_scope('stddev'):
+                stddev = tf.sqrt(tf.reduce_mean(tf.square(var - mean)))
+            tf.scalar_summary('stddev/' + name, stddev)
+            tf.scalar_summary('max/' + name, tf.reduce_max(var))
+            tf.scalar_summary('min/' + name, tf.reduce_min(var))
+            tf.histogram_summary(name, var)
+
 
     def accuracy(self, logits, labels):
         """
@@ -119,7 +149,10 @@ class ConvNet(object):
         ########################
         # PUT YOUR CODE HERE  #
         ########################
-
+        with tf.name_scope("accuracy"):
+            correct_predictions=tf.equal(tf.argmax(logits,1), tf.argmax(labels,1))
+            accuracy=tf.reduce_mean(tf.cast(correct_predictions, tf.float32))
+            tf.scalar_summary('accuracy',accuracy)
         ########################
         # END OF YOUR CODE    #
         ########################
@@ -150,9 +183,12 @@ class ConvNet(object):
         ########################
         # PUT YOUR CODE HERE  #
         ########################
-        # cross_entropy = tf.nn.sparse_softmax_cross_entropy_with_logits(logits, labels, name='cross_entropy')
-        cross_entropy = tf.nn.softmax_cross_entropy_with_logits(logits, labels, name='cross_entropy')
-        loss = tf.reduce_mean(cross_entropy, sum(tf.get_collection(tf.GraphKeys.REGULARIZATION_LOSSES)))
+        with tf.name_scope("loss"):
+            # cross_entropy = tf.nn.sparse_softmax_cross_entropy_with_logits(logits, labels, name='cross_entropy')
+            cross_entropy = tf.nn.softmax_cross_entropy_with_logits(logits, labels, name='cross_entropy')
+            loss = tf.reduce_mean(cross_entropy)
+            loss=tf.add(loss, sum(tf.get_collection(tf.GraphKeys.REGULARIZATION_LOSSES)))
+            tf.scalar_summary('loss_regularized',loss)
         ########################
         # END OF YOUR CODE    #
         ########################

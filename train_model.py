@@ -7,6 +7,8 @@ import os
 
 import tensorflow as tf
 import numpy as np
+import cifar10_utils
+from convnet import *
 
 LEARNING_RATE_DEFAULT = 1e-4
 BATCH_SIZE_DEFAULT = 128
@@ -19,6 +21,13 @@ OPTIMIZER_DEFAULT = 'ADAM'
 DATA_DIR_DEFAULT = './cifar10/cifar-10-batches-py'
 LOG_DIR_DEFAULT = './logs/cifar10'
 CHECKPOINT_DIR_DEFAULT = './checkpoints'
+
+OPTIMIZER_DICT = {'sgd': tf.train.GradientDescentOptimizer, # Gradient Descent
+                  'adadelta': tf.train.AdadeltaOptimizer, # Adadelta
+                  'adagrad': tf.train.AdagradOptimizer, # Adagrad
+                  'adam': tf.train.AdamOptimizer, # Adam
+                  'rmsprop': tf.train.RMSPropOptimizer # RMSprop
+                  }
 
 def train_step(loss):
     """
@@ -35,7 +44,8 @@ def train_step(loss):
     ########################
     # PUT YOUR CODE HERE  #
     ########################
-    raise NotImplementedError
+    optimizer=OPTIMIZER_DICT['adadelta'](learning_rate=FLAGS.learning_rate)
+    train_op=optimizer.minimize(loss)
     ########################
     # END OF YOUR CODE    #
     ########################
@@ -80,7 +90,33 @@ def train():
     ########################
     # PUT YOUR CODE HERE  #
     ########################
-    raise NotImplementedError
+    cifar10 = cifar10_utils.get_cifar10(DATA_DIR_DEFAULT)
+    x_test, y_test = cifar10.test.images, cifar10.test.labels
+    x_pl=tf.placeholder(tf.float32,shape=(None,x_test.shape[1],x_test.shape[2],x_test.shape[3]))
+    y_pl=tf.placeholder(tf.float32,shape=(None,y_test.shape[1]))
+    convNet=ConvNet()
+    pred=convNet.inference(x_pl)
+    loss=convNet.loss(pred,y_pl)
+    accuracy=convNet.accuracy(pred,y_pl)
+    train_op=train_step(loss)
+
+    with tf.Session() as sess:
+        sess.run(tf.initialize_all_variables())
+        train_writer = tf.train.SummaryWriter(FLAGS.log_dir + '/train',sess.graph)
+        test_writer = tf.train.SummaryWriter(FLAGS.log_dir + '/test',sess.graph)
+
+        for epoch in xrange(FLAGS.max_steps):
+            batch_x, batch_y = cifar10.train.next_batch(FLAGS.batch_size)
+            _,out,acc=sess.run([train_op,loss,accuracy], feed_dict={x_pl: batch_x,y_pl: batch_y})
+            if epoch % 100 == 0:
+                # train_writer.add_summary(merged_sum,epoch)
+                # train_writer.flush()
+                print ("Epoch:", '%04d' % (epoch), "loss=","{:.2f}".format(out),"accuracy=","{:.2f}".format(acc))
+            # if epoch % 500 == 0:
+            #     out,acc=sess.run([loss,accuracy], feed_dict={x_pl: x_test,y_pl:y_test})
+            #     # test_writer.add_summary(merged_sum,epoch)
+            #     # test_writer.flush()
+            #     print ("Test set:" "loss=","{:.2f}".format(out),"accuracy=","{:.2f}".format(acc))
     ########################
     # END OF YOUR CODE    #
     ########################
