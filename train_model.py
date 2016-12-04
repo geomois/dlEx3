@@ -9,6 +9,7 @@ import tensorflow as tf
 import numpy as np
 import cifar10_utils
 from convnet import *
+from sklearn.manifold import TSNE
 
 LEARNING_RATE_DEFAULT = 1e-4
 BATCH_SIZE_DEFAULT = 128
@@ -44,7 +45,7 @@ def train_step(loss):
     ########################
     # PUT YOUR CODE HERE  #
     ########################
-    optimizer=OPTIMIZER_DICT['adadelta'](learning_rate=FLAGS.learning_rate)
+    optimizer=OPTIMIZER_DICT['adam'](learning_rate=FLAGS.learning_rate)
     train_op=optimizer.minimize(loss)
     ########################
     # END OF YOUR CODE    #
@@ -95,31 +96,44 @@ def train():
     x_pl=tf.placeholder(tf.float32,shape=(None,x_test.shape[1],x_test.shape[2],x_test.shape[3]))
     y_pl=tf.placeholder(tf.float32,shape=(None,y_test.shape[1]))
     convNet=ConvNet()
-    pred=convNet.inference(x_pl)
+    prediction=convNet.inference(x_pl)
+    pred=pridiction['out']
     loss=convNet.loss(pred,y_pl)
     accuracy=convNet.accuracy(pred,y_pl)
     train_op=train_step(loss)
+    saver  = tf.train.Saver()
+    tf.add_to_collection('nn',prediction)
+    tf.add_to_collection('nn',accuracy)
+    # tf.add_to_collection('fc2',prediction['fc2'])
+    # tf.add_to_collection('fc2',prediction['fc1'])
 
     with tf.Session() as sess:
         sess.run(tf.initialize_all_variables())
         train_writer = tf.train.SummaryWriter(FLAGS.log_dir + '/train',sess.graph)
         test_writer = tf.train.SummaryWriter(FLAGS.log_dir + '/test',sess.graph)
 
-        for epoch in xrange(FLAGS.max_steps):
+        for epoch in xrange(FLAGS.max_steps +1):
             batch_x, batch_y = cifar10.train.next_batch(FLAGS.batch_size)
             _,out,acc=sess.run([train_op,loss,accuracy], feed_dict={x_pl: batch_x,y_pl: batch_y})
-            if epoch % 100 == 0:
+            if epoch % FLAGS.print_freq == 0:
                 # train_writer.add_summary(merged_sum,epoch)
                 # train_writer.flush()
-                print ("Epoch:", '%04d' % (epoch), "loss=","{:.2f}".format(out),"accuracy=","{:.2f}".format(acc))
-            # if epoch % 500 == 0:
-            #     out,acc=sess.run([loss,accuracy], feed_dict={x_pl: x_test,y_pl:y_test})
-            #     # test_writer.add_summary(merged_sum,epoch)
-            #     # test_writer.flush()
-            #     print ("Test set:" "loss=","{:.2f}".format(out),"accuracy=","{:.2f}".format(acc))
+                print ("Epoch:", '%05d' % (epoch), "loss=","{:.4f}".format(out),"accuracy=","{:.4f}".format(acc))
+            if epoch % FLAGS.eval_freq ==0 and epoch>0:
+                batch_x, batch_y = cifar10.test.next_batch(FLAGS.batch_size*2)
+                out,acc=sess.run([loss,accuracy], feed_dict={x_pl: batch_x,y_pl: batch_y})
+                # out,acc=sess.run([loss,accuracy], feed_dict={x_pl: x_test,y_pl:y_test})
+                # test_writer.afdd_summary(merged_sum,epoch)
+                # test_writer.flush()
+                print ("Test set:","accuracy=","{:.4f}".format(acc))
+            if epoch % FLAGS.checkpoint_freq==0 and epoch>0:
+                saver.save(sess,FLAGS.checkpoint_dir+'/linear'+str(epoch)+'.ckpt')
+
     ########################
     # END OF YOUR CODE    #
     ########################
+
+# def fetch_test_batch():
 
 
 def train_siamese():
@@ -187,10 +201,30 @@ def feature_extraction():
     ########################
     # PUT YOUR CODE HERE  #
     ########################
-    raise NotImplementedError
+    with tf.Session() as sess:
+        saver=tf.train.import_meta_graph(FLAGS.checkpoint_dir+"/checkpoints10000.ckpt.meta")
+        ckpt = tf.train.get_checkpoint_state(FLAGS.checkpoint_dir+"/")
+        saver.restore(sess,ckpt.model_checkpoint_path)
+        all_vars=tf.trainable_variables()
+        
+        pred=tf.get_collection('nn')[1]
+        cifar10 = cifar10_utils.get_cifar10(DATA_DIR_DEFAULT)
+        x_test, y_test = cifar10.test.images, cifar10.test.labels
+        x_pl=tf.placeholder(tf.float32,shape=(None,x_test.shape[1],x_test.shape[2],x_test.shape[3]))
+        y_pl=tf.placeholder(tf.float32,shape=(None,y_test.shape[1]))
+        acc=sess.run([pred], feed_dict={x_pl: x_test,y_pl: y_test})
+        print ("Test set:","accuracy=","{:.4f}".format(acc))
+        # tSNEModel=TSNE()
+        # tSNEModel.fit_transform()
+        
+        
+        
+
     ########################
     # END OF YOUR CODE    #
     ########################
+
+
 
 def initialize_folders():
     """
@@ -217,7 +251,6 @@ def main(_):
     print_flags()
 
     initialize_folders()
-
     if FLAGS.is_train:
         if FLAGS.train_model == 'linear':
             train()
