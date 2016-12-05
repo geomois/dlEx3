@@ -65,7 +65,7 @@ class ConvNet(object):
                 self._variable_summaries(kernel,tf.get_variable_scope().name+'/weights')
                 layer=tf.nn.conv2d(x,kernel, strides=[1,1,1,1], padding='SAME')
                 pre_activation=tf.nn.bias_add(layer,bias)
-                layer=tf.nn.relu(pre_activation)
+                layer=tf.nn.relu(pre_activation,name='activation')
                 nnDict['conv1']=layer
                 layer=tf.nn.max_pool(layer,ksize=[1,3,3,1],strides=[1,2,2,1],padding='SAME')
                 # conv1=tf.nn.max_pool(conv1,ksize=[3,3],strides=[1,2,2,1],padding='SAME')
@@ -79,7 +79,7 @@ class ConvNet(object):
                 self._variable_summaries(kernel,tf.get_variable_scope().name+'/weights')
                 layer=tf.nn.conv2d(layer,kernel, strides=[1,1,1,1], padding='SAME')
                 pre_activation=tf.nn.bias_add(layer,bias)
-                layer=tf.nn.relu(pre_activation)
+                layer=tf.nn.relu(pre_activation,name='activation')
                 nnDict['conv2']=layer
                 layer=tf.nn.max_pool(layer,ksize=[1,3,3,1],strides=[1,2,2,1],padding='SAME')
                 tf.histogram_summary(tf.get_variable_scope().name+'/layer',layer)
@@ -89,7 +89,7 @@ class ConvNet(object):
             with tf.variable_scope("flatten"):
                 flatten=tf.contrib.layers.flatten(layer)
                 nnDict['flatten']=flatten 
-                tf.histogram_summary(tf.get_variable_scope().name+"/layer",layer)
+                tf.histogram_summary(tf.get_variable_scope().name+"/layer",layer,name='activation')
 
             with tf.variable_scope("fc1"):
                 # kernel=tf.get_variable("w",[flatten.get_shape()[1],384],regularizer=tf.contrib.layers.l2_regularizer(0.001),initializer=tf.contrib.layers.xavier_initializer())
@@ -97,7 +97,7 @@ class ConvNet(object):
                 bias=tf.get_variable("b",[384],initializer=tf.constant_initializer(0.1))
                 self._variable_summaries(bias,tf.get_variable_scope().name+'/bias')
                 self._variable_summaries(kernel,tf.get_variable_scope().name+'/weights')
-                layer=tf.nn.relu(tf.add(tf.matmul(flatten,kernel),bias))
+                layer=tf.nn.relu(tf.add(tf.matmul(flatten,kernel),bias),name='activation')
                 nnDict['fc1']=layer
                 tf.histogram_summary(tf.get_variable_scope().name+'/layer',layer)
 
@@ -107,7 +107,7 @@ class ConvNet(object):
                 bias=tf.get_variable("b",[192],initializer=tf.constant_initializer(0.1))
                 self._variable_summaries(bias,tf.get_variable_scope().name+'/bias')
                 self._variable_summaries(kernel,tf.get_variable_scope().name+'/weights')
-                layer=tf.nn.relu(tf.add(tf.matmul(layer,kernel),bias))
+                layer=tf.nn.relu(tf.add(tf.matmul(layer,kernel),bias),name='activation')
                 nnDict['fc2']=layer                
                 tf.histogram_summary(tf.get_variable_scope().name+'/layer',layer)
 
@@ -121,7 +121,8 @@ class ConvNet(object):
                 nnDict['out']=layer
                 tf.histogram_summary(tf.get_variable_scope().name+'/softmax',layer)
             
-            logits=nnDict
+            # logits=nnDict
+            logits=layer
             ########################
             # END OF YOUR CODE    #
             ########################

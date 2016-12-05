@@ -91,19 +91,26 @@ def train():
     ########################
     # PUT YOUR CODE HERE  #
     ########################
-    cifar10 = cifar10_utils.get_cifar10(DATA_DIR_DEFAULT)
+    cifar10 = cifar10_utils.get_cifar10(FLAGS.data_dir)
+    
     x_test, y_test = cifar10.test.images, cifar10.test.labels
     x_pl=tf.placeholder(tf.float32,shape=(None,x_test.shape[1],x_test.shape[2],x_test.shape[3]))
     y_pl=tf.placeholder(tf.float32,shape=(None,y_test.shape[1]))
+    
     convNet=ConvNet()
     prediction=convNet.inference(x_pl)
-    pred=pridiction['out']
+    pred=prediction['out']
     loss=convNet.loss(pred,y_pl)
     accuracy=convNet.accuracy(pred,y_pl)
     train_op=train_step(loss)
-    saver  = tf.train.Saver()
-    tf.add_to_collection('nn',prediction)
-    tf.add_to_collection('nn',accuracy)
+    saver=tf.train.Saver()
+
+    #Trying and approach with collections
+    # tf.add_to_collection('nn',prediction['flatten'])
+    # tf.add_to_collection('nn',prediction['fc1'])
+    # tf.add_to_collection('nn',prediction['fc2'])
+    # tf.add_to_collection('nn',pred)
+    # tf.add_to_collection('nn',accuracy)
     # tf.add_to_collection('fc2',prediction['fc2'])
     # tf.add_to_collection('fc2',prediction['fc1'])
 
@@ -120,12 +127,22 @@ def train():
                 # train_writer.flush()
                 print ("Epoch:", '%05d' % (epoch), "loss=","{:.4f}".format(out),"accuracy=","{:.4f}".format(acc))
             if epoch % FLAGS.eval_freq ==0 and epoch>0:
-                batch_x, batch_y = cifar10.test.next_batch(FLAGS.batch_size*2)
-                out,acc=sess.run([loss,accuracy], feed_dict={x_pl: batch_x,y_pl: batch_y})
+                # batch_x, batch_y = cifar10.test.next_batch(FLAGS.batch_size*5)
+                avgLoss=0
+                avgAcc=0
+                count=0
+                step=1000
+                for i in xrange(0,x_test.shape[0],step):
+                    batch_x=x_test[i:i+step]
+                    batch_y=y_test[i:i+step]
+                    loss,acc=sess.run([loss,accuracy], feed_dict={x_pl: batch_x,y_pl: batch_y})
+                    avgAcc=avgAcc+acc
+                    avgLoss=avgLoss+loss
+                    count=count+1
                 # out,acc=sess.run([loss,accuracy], feed_dict={x_pl: x_test,y_pl:y_test})
                 # test_writer.afdd_summary(merged_sum,epoch)
                 # test_writer.flush()
-                print ("Test set:","accuracy=","{:.4f}".format(acc))
+                print ("Test set:","accuracy=","{:.4f}".format(avgAcc/count))
             if epoch % FLAGS.checkpoint_freq==0 and epoch>0:
                 saver.save(sess,FLAGS.checkpoint_dir+'/linear'+str(epoch)+'.ckpt')
 
@@ -201,30 +218,52 @@ def feature_extraction():
     ########################
     # PUT YOUR CODE HERE  #
     ########################
+    cifar10 = cifar10_utils.get_cifar10(FLAGS.data_dir)
+    x_test, y_test = cifar10.test.images, cifar10.test.labels
+    x_pl=tf.placeholder(tf.float32,shape=(None,x_test.shape[1],x_test.shape[2],x_test.shape[3]))
+    y_pl=tf.placeholder(tf.float32,shape=(None,y_test.shape[1]))
+    
+    print("Building the model")
+    convNet=ConvNet()
+    pred=convNet.inference(x_pl)
+    loss=convNet.loss(pred,y_pl)
+    accuracy=convNet.accuracy(pred,y_pl)
+    
+    #Taking intermediate layers
+    flatten = tf.get_default_graph().get_tensor_by_name("ConvNet/flatten/activation:0")
+    fc1 = tf.get_default_graph().get_tensor_by_name("ConvNet/fc1/activation:0")
+    fc2 = tf.get_default_graph().get_tensor_by_name("ConvNet/fc2/activation:0")
+
     with tf.Session() as sess:
-        saver=tf.train.import_meta_graph(FLAGS.checkpoint_dir+"/checkpoints10000.ckpt.meta")
-        ckpt = tf.train.get_checkpoint_state(FLAGS.checkpoint_dir+"/")
-        saver.restore(sess,ckpt.model_checkpoint_path)
-        all_vars=tf.trainable_variables()
-        
-        pred=tf.get_collection('nn')[1]
-        cifar10 = cifar10_utils.get_cifar10(DATA_DIR_DEFAULT)
-        x_test, y_test = cifar10.test.images, cifar10.test.labels
-        x_pl=tf.placeholder(tf.float32,shape=(None,x_test.shape[1],x_test.shape[2],x_test.shape[3]))
-        y_pl=tf.placeholder(tf.float32,shape=(None,y_test.shape[1]))
-        acc=sess.run([pred], feed_dict={x_pl: x_test,y_pl: y_test})
-        print ("Test set:","accuracy=","{:.4f}".format(acc))
-        # tSNEModel=TSNE()
-        # tSNEModel.fit_transform()
-        
-        
-        
+        saver = tf.train.Saver(tf.all_variables())
+        graph  = tf.get_default_graph()
+        check = tf.train.get_checkpoint_state(FLAGS.checkpoint_dir+"/")
+        sess.run(tf.initialize_all_variables())
+
+        saver.restore(sess,check.model_checkpoint_path)
+
+        acc, flattenOut,fc1Out,fc2Out = sess.run([accuracy,flatten,fc1, fc2],feed_dict={x_pl: x_test,y_pl:y_test})
+
+    #     avgLoss=0
+    #     avgAcc=0
+    #     count=0
+    #     step=1000
+    #     #Feed forward whole test_set in batches and keep the average (gpu limitations) 
+    #     for i in xrange(0,x_test.shape[0],step):
+    #         batch_x=x_test[i:i+step]
+    #         batch_y=y_test[i:i+step]
+    #         acc=sess.run([accuracy], feed_dict={x_pl: batch_x,y_pl: batch_y})
+    #         avgAcc=avgAcc+acc
+    #         avgLoss=avgLoss+loss
+    #         count=count+1
+    #     print ("Test set:","accuracy=","{:.4f}".format(avgAcc/count))
+        np.save("./features/flatten.npy", flattenOut)
+        np.save("./features/fc1.npy", fc1Out)
+        np.save("./features/fc2.npy", fc2Out)        
 
     ########################
     # END OF YOUR CODE    #
     ########################
-
-
 
 def initialize_folders():
     """
