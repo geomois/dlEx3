@@ -98,14 +98,14 @@ def train():
     y_pl=tf.placeholder(tf.float32,shape=(None,y_test.shape[1]))
     
     convNet=ConvNet()
-    prediction=convNet.inference(x_pl)
-    pred=prediction['out']
+    pred=convNet.inference(x_pl)
+    # pred=prediction['out']
     loss=convNet.loss(pred,y_pl)
     accuracy=convNet.accuracy(pred,y_pl)
     train_op=train_step(loss)
     saver=tf.train.Saver()
 
-    #Trying and approach with collections
+    #Trying an approach with collections
     # tf.add_to_collection('nn',prediction['flatten'])
     # tf.add_to_collection('nn',prediction['fc1'])
     # tf.add_to_collection('nn',prediction['fc2'])
@@ -133,11 +133,11 @@ def train():
                 count=0
                 step=1000
                 for i in xrange(0,x_test.shape[0],step):
-                    batch_x=x_test[i:i+step]
+                    batch_x=x_test[i:i+step,:]
                     batch_y=y_test[i:i+step]
-                    loss,acc=sess.run([loss,accuracy], feed_dict={x_pl: batch_x,y_pl: batch_y})
+                    out,acc=sess.run([loss,accuracy], feed_dict={x_pl: batch_x,y_pl: batch_y})
                     avgAcc=avgAcc+acc
-                    avgLoss=avgLoss+loss
+                    avgLoss=avgLoss+out
                     count=count+1
                 # out,acc=sess.run([loss,accuracy], feed_dict={x_pl: x_test,y_pl:y_test})
                 # test_writer.afdd_summary(merged_sum,epoch)
@@ -243,7 +243,8 @@ def feature_extraction():
         saver.restore(sess,check.model_checkpoint_path)
 
         acc, flattenOut,fc1Out,fc2Out = sess.run([accuracy,flatten,fc1, fc2],feed_dict={x_pl: x_test,y_pl:y_test})
-
+        out = sess.run([pred],feed_dict={x_pl: x_test,y_pl:y_test})
+        print ("Test set:","accuracy=","{:.4f}".format(acc))
     #     avgLoss=0
     #     avgAcc=0
     #     count=0
@@ -260,6 +261,7 @@ def feature_extraction():
         np.save("./features/flatten.npy", flattenOut)
         np.save("./features/fc1.npy", fc1Out)
         np.save("./features/fc2.npy", fc2Out)        
+        np.save("./features/out.npy", out)  
 
     ########################
     # END OF YOUR CODE    #

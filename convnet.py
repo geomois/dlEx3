@@ -87,9 +87,9 @@ class ConvNet(object):
             # reshape = tf.reshape(layer, [384, -1])
             # dim = reshape.get_shape()[1].value
             with tf.variable_scope("flatten"):
-                flatten=tf.contrib.layers.flatten(layer)
+                flatten=tf.contrib.layers.flatten(layer,name='activation')
                 nnDict['flatten']=flatten 
-                tf.histogram_summary(tf.get_variable_scope().name+"/layer",layer,name='activation')
+                tf.histogram_summary(tf.get_variable_scope().name+"/layer",layer)
 
             with tf.variable_scope("fc1"):
                 # kernel=tf.get_variable("w",[flatten.get_shape()[1],384],regularizer=tf.contrib.layers.l2_regularizer(0.001),initializer=tf.contrib.layers.xavier_initializer())
