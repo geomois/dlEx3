@@ -178,9 +178,10 @@ def create_dataset(source, num_tuples=500, batch_size=128, fraction_same=0.2):
                     exists=False
             
             if not exists:
+                currentList.append(x1[0])
                 dset.append((x1,x2,label))
                 break
-    print ("dset: ",len(dset))
+    # print ("dset: ",len(dset))
     ########################
     # END OF YOUR CODE    #
     ########################
@@ -208,6 +209,7 @@ class DataSet(object):
         self._epochs_completed = 0
         self._index_in_epoch = 0
         self._id_list = [None]*num_classes
+        self._num_classes=num_classes
 
         for i in range(num_classes):
             self._id_list[i]=[]
@@ -271,7 +273,7 @@ class DataSet(object):
         x1 = np.zeros((batch_size, 32, 32, 3))
         x2 = np.zeros((batch_size, 32, 32, 3))
         labels = np.zeros((batch_size))
-        count= 0
+        counter= 0
 
         anchors = random.sample(range(0, self.num_examples), 1)
         

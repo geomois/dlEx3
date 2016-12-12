@@ -78,7 +78,7 @@ class Siamese(object):
             # dim = reshape.get_shape()[1].value
             with tf.variable_scope("flatten"):
                 flatten=tf.contrib.layers.flatten(layer)
-                tf.histogram_summary(tf.get_variable_scope().name+"/layer",layer,name='activation')
+                tf.histogram_summary(tf.get_variable_scope().name+"/layer",flatten,name='activation')
 
             with tf.variable_scope("fc1"):
                 # kernel=tf.get_variable("w",[flatten.get_shape()[1],384],regularizer=tf.contrib.layers.l2_regularizer(0.001),initializer=tf.contrib.layers.xavier_initializer())
@@ -99,8 +99,8 @@ class Siamese(object):
                 tf.histogram_summary(tf.get_variable_scope().name+'/layer',layer)
                 
             with tf.variable_scope("l2_norm"):
-                layer=tf.nn.l2_normalize(layer,0, epsilon=1e-12, name="outNorm")#να τσεκάρω dim
-                # tf.nn.l2_normalize(layer,1 , epsilon=1e-12, name=scope.name)#να τσεκάρω dim
+                layer=tf.nn.l2_normalize(layer,0, epsilon=1e-12, name="outNorm")
+                # tf.nn.l2_normalize(layer,1 , epsilon=1e-12, name=scope.name)
 
             l2_out=layer
             ########################
@@ -109,7 +109,18 @@ class Siamese(object):
 
         return l2_out
 
-    def loss(self, channel_1, channel_2, label, margin):
+    def _variable_summaries(self,var, name):
+        with tf.name_scope('summaries'):
+            mean = tf.reduce_mean(var)
+            tf.scalar_summary('mean/' + name, mean)
+            with tf.name_scope('stddev'):
+                stddev = tf.sqrt(tf.reduce_mean(tf.square(var - mean)))
+            tf.scalar_summary('stddev/' + name, stddev)
+            tf.scalar_summary('max/' + name, tf.reduce_max(var))
+            tf.scalar_summary('min/' + name, tf.reduce_min(var))
+            tf.histogram_summary(name, var)
+
+    def loss(self, channel_1, channel_2, label, margin,batch_size):
         """
         Defines the contrastive loss. This loss ties the outputs of
         the branches to compute the following:
@@ -139,10 +150,13 @@ class Siamese(object):
         ########################
         # PUT YOUR CODE HERE  #
         ########################
+        # batch_size=
         with tf.name_scope("contrastive_loss"):
-            d = tf.reduce_sum(tf.square(tf.sub(channel_1,channel_2), 1)#keep_dims=True
-            d_sqrt = tf.sqrt(d)
-            loss = label * tf.square(tf.maximum(0., margin - d_sqrt)) + (1 - label) * d
+            d = tf.reduce_sum(tf.pow(tf.sub(channel_1,channel_2),2),1)#keep_dims=True
+            dSqRoot=tf.sqrt(d)
+            loss = label * tf.square(tf.maximum(0., margin - dSqRoot)) + (1 - label) * d
+            loss=tf.reduce_sum(loss)/batch_size/2
+            # loss=tf.reduce_sum(loss)
         ########################
         # END OF YOUR CODE    #
         ########################

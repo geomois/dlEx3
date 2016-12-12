@@ -7,6 +7,8 @@ import os
 
 import tensorflow as tf
 import numpy as np
+from vgg import *
+import cifar10_utils
 
 LEARNING_RATE_DEFAULT = 1e-4
 BATCH_SIZE_DEFAULT = 128
@@ -14,12 +16,19 @@ MAX_STEPS_DEFAULT = 15000
 EVAL_FREQ_DEFAULT = 1000
 CHECKPOINT_FREQ_DEFAULT = 5000
 PRINT_FREQ_DEFAULT = 10
-OPTIMIZER_DEFAULT = 'ADAM'
+OPTIMIZER_DEFAULT = 'adam'
 REFINE_AFTER_K_STEPS_DEFAULT = 0
 
 DATA_DIR_DEFAULT = './cifar10/cifar-10-batches-py'
 LOG_DIR_DEFAULT = './logs/cifar10'
 CHECKPOINT_DIR_DEFAULT = './checkpoints'
+
+OPTIMIZER_DICT = {'sgd': tf.train.GradientDescentOptimizer, # Gradient Descent
+                  'adadelta': tf.train.AdadeltaOptimizer, # Adadelta
+                  'adagrad': tf.train.AdagradOptimizer, # Adagrad
+                  'adam': tf.train.AdamOptimizer, # Adam
+                  'rmsprop': tf.train.RMSPropOptimizer # RMSprop
+                  }
 
 def train_step(loss):
     """
@@ -36,7 +45,8 @@ def train_step(loss):
     ########################
     # PUT YOUR CODE HERE  #
     ########################
-    raise NotImplementedError
+    optimizer=OPTIMIZER_DICT[OPTIMIZER_DEFAULT](learning_rate=FLAGS.learning_rate)
+    train_op=optimizer.minimize(loss)
     ########################
     # END OF YOUR CODE    #
     ########################
@@ -72,7 +82,55 @@ def train():
     ########################
     # PUT YOUR CODE HERE  #
     ########################
-    raise NotImplementedError
+    cifar10 = cifar10_utils.get_cifar10(FLAGS.data_dir)
+    
+    x_test, y_test = cifar10.test.images, cifar10.test.labels
+    x_pl=tf.placeholder(tf.float32,shape=(None,x_test.shape[1],x_test.shape[2],x_test.shape[3]))
+    y_pl=tf.placeholder(tf.float32,shape=(None,y_test.shape[1]))
+    
+    pool5,assign_ops=load_pretrained_VGG16_pool5(x_pl)
+    pool5=tf.stop_gradient(pool5)
+    fcNet=FCNet()
+    pred=fcNet.inference(pool5)
+    loss=fcNet.loss(pred,y_pl)
+    accuracy=fcNet.accuracy(pred,y_pl)
+    train_op=train_step(loss)
+    saver=tf.train.Saver()
+    merged=tf.merge_all_summaries()
+
+    with tf.Session() as sess:
+        sess.run(tf.initialize_all_variables())
+        for op in assign_ops:
+            sess.run(op)
+        train_writer = tf.train.SummaryWriter(FLAGS.log_dir + '/train',sess.graph)
+        test_writer = tf.train.SummaryWriter(FLAGS.log_dir + '/test',sess.graph)
+
+        for epoch in xrange(FLAGS.max_steps +1):
+            batch_x, batch_y = cifar10.train.next_batch(FLAGS.batch_size)
+            _,out,acc,merged_sum=sess.run([train_op,loss,accuracy,merged], feed_dict={x_pl: batch_x,y_pl: batch_y})
+            if epoch % FLAGS.print_freq == 0:
+                train_writer.add_summary(merged_sum,epoch)
+                train_writer.flush()
+                print ("Epoch:", '%05d' % (epoch), "loss=","{:.4f}".format(out),"accuracy=","{:.4f}".format(acc))
+            if epoch % FLAGS.eval_freq ==0 and epoch>0:
+                avgLoss=0
+                avgAcc=0
+                count=0
+                step=1000
+                merged_sum_test=None
+                #Calculating test set in parts, as the whole dataset doesn't fit into the memoryview
+                for i in xrange(0,x_test.shape[0],step):
+                    batch_x=x_test[i:i+step,:]
+                    batch_y=y_test[i:i+step]
+                    out,acc,merged_sum_test=sess.run([loss,accuracy,merged], feed_dict={x_pl: batch_x,y_pl: batch_y})
+                    avgAcc=avgAcc+acc
+                    avgLoss=avgLoss+out
+                    count=count+1
+                test_writer.add_summary(merged_sum_test,epoch)
+                test_writer.flush()
+                print ("Test set:","accuracy=","{:.4f}".format(avgAcc/count))
+            if epoch % FLAGS.checkpoint_freq==0 and epoch>0:
+                saver.save(sess,FLAGS.checkpoint_dir+'/vgg'+str(epoch)+'.ckpt')
     ########################
     # END OF YOUR CODE    #
     ########################
