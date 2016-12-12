@@ -87,13 +87,13 @@ class ConvNet(object):
             # reshape = tf.reshape(layer, [384, -1])
             # dim = reshape.get_shape()[1].value
             with tf.variable_scope("flatten"):
-                flatten=tf.contrib.layers.flatten(layer,name='activation')
+                flatten=tf.contrib.layers.flatten(layer)
                 nnDict['flatten']=flatten 
                 tf.histogram_summary(tf.get_variable_scope().name+"/layer",layer)
 
             with tf.variable_scope("fc1"):
-                # kernel=tf.get_variable("w",[flatten.get_shape()[1],384],regularizer=tf.contrib.layers.l2_regularizer(0.001),initializer=tf.contrib.layers.xavier_initializer())
-                kernel=tf.get_variable("w",[flatten.get_shape()[1],384],initializer=tf.contrib.layers.xavier_initializer())
+                kernel=tf.get_variable("w",[flatten.get_shape()[1],384],regularizer=tf.contrib.layers.l2_regularizer(0.001),initializer=tf.contrib.layers.xavier_initializer())
+                # kernel=tf.get_variable("w",[flatten.get_shape()[1],384],initializer=tf.contrib.layers.xavier_initializer())
                 bias=tf.get_variable("b",[384],initializer=tf.constant_initializer(0.1))
                 self._variable_summaries(bias,tf.get_variable_scope().name+'/bias')
                 self._variable_summaries(kernel,tf.get_variable_scope().name+'/weights')
@@ -102,8 +102,8 @@ class ConvNet(object):
                 tf.histogram_summary(tf.get_variable_scope().name+'/layer',layer)
 
             with tf.variable_scope("fc2"):
-                # kernel=tf.get_variable("w",[384,192],regularizer=tf.contrib.layers.l2_regularizer(0.001),initializer=tf.contrib.layers.xavier_initializer())
-                kernel=tf.get_variable("w",[384,192],initializer=tf.contrib.layers.xavier_initializer())
+                kernel=tf.get_variable("w",[384,192],regularizer=tf.contrib.layers.l2_regularizer(0.001),initializer=tf.contrib.layers.xavier_initializer())
+                # kernel=tf.get_variable("w",[384,192],initializer=tf.contrib.layers.xavier_initializer())
                 bias=tf.get_variable("b",[192],initializer=tf.constant_initializer(0.1))
                 self._variable_summaries(bias,tf.get_variable_scope().name+'/bias')
                 self._variable_summaries(kernel,tf.get_variable_scope().name+'/weights')
@@ -112,8 +112,8 @@ class ConvNet(object):
                 tf.histogram_summary(tf.get_variable_scope().name+'/layer',layer)
 
             with tf.variable_scope("fc3"):
-                # kernel=tf.get_variable("w",[192,self.n_classes],regularizer=tf.contrib.layers.l2_regularizer(0.001),initializer=tf.contrib.layers.xavier_initializer())
-                kernel=tf.get_variable("w",[192,self.n_classes],initializer=tf.contrib.layers.xavier_initializer())
+                kernel=tf.get_variable("w",[192,self.n_classes],regularizer=tf.contrib.layers.l2_regularizer(0.001),initializer=tf.contrib.layers.xavier_initializer())
+                # kernel=tf.get_variable("w",[192,self.n_classes],initializer=tf.contrib.layers.xavier_initializer())
                 bias=tf.get_variable("b",[self.n_classes],initializer=tf.constant_initializer(0.1))
                 self._variable_summaries(bias,tf.get_variable_scope().name+'/bias')
                 self._variable_summaries(kernel,tf.get_variable_scope().name+'/weights')

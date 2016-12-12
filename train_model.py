@@ -8,8 +8,15 @@ import os
 import tensorflow as tf
 import numpy as np
 import cifar10_utils
+import cifar10_siamese_utils
+
 from convnet import *
+from siamese import *
+
 from sklearn.manifold import TSNE
+from sklearn.datasets import make_multilabel_classification
+from sklearn.multiclass import OneVsRestClassifier
+from sklearn.svm import SVC
 
 LEARNING_RATE_DEFAULT = 1e-4
 BATCH_SIZE_DEFAULT = 128
@@ -127,11 +134,11 @@ def train():
                 # train_writer.flush()
                 print ("Epoch:", '%05d' % (epoch), "loss=","{:.4f}".format(out),"accuracy=","{:.4f}".format(acc))
             if epoch % FLAGS.eval_freq ==0 and epoch>0:
-                # batch_x, batch_y = cifar10.test.next_batch(FLAGS.batch_size*5)
                 avgLoss=0
                 avgAcc=0
                 count=0
                 step=1000
+                #Calculating test set in parts, as the whole dataset doesn't fit into the memory 
                 for i in xrange(0,x_test.shape[0],step):
                     batch_x=x_test[i:i+step,:]
                     batch_y=y_test[i:i+step]
@@ -194,7 +201,46 @@ def train_siamese():
     ########################
     # PUT YOUR CODE HERE  #
     ########################
-    raise NotImplementedError
+    cifar10 = cifar10_siamese_utils.get_cifar10(FLAGS.data_dir)
+    
+    x_test, y_test = cifar10.test.images, cifar10.test.labels
+    x_pl=tf.placeholder(tf.float32,shape=(None,x_test.shape[1],x_test.shape[2],x_test.shape[3]))
+    y_pl=tf.placeholder(tf.float32,shape=(None,y_test.shape[1]))
+    
+    siamNet=Siamese()
+    pred1=siamNet.inference(x_pl)
+    pred2=siamNet.inference(x_pl,reuse=True)
+    loss=siamNet.loss(pred1,pred2,y_pl)
+    train_op=train_step(loss)
+    saver=tf.train.Saver()
+
+    with tf.Session() as sess:
+        sess.run(tf.initialize_all_variables())
+        # train_writer = tf.train.SummaryWriter(FLAGS.log_dir + '/train',sess.graph)
+        # test_writer = tf.train.SummaryWriter(FLAGS.log_dir + '/test',sess.graph)
+
+        for epoch in xrange(FLAGS.max_steps +1):
+            batch_x, batch_y = cifar10.train.next_batch(FLAGS.batch_size)
+            _,out=sess.run([train_op,loss], feed_dict={x_pl: batch_x,y_pl: batch_y})
+            if epoch % FLAGS.print_freq == 0:
+                # train_writer.add_summary(merged_sum,epoch)
+                # train_writer.flush()
+                print ("Epoch:", '%05d' % (epoch), "loss=","{:.4f}".format(out))
+            if epoch % FLAGS.eval_freq ==0 and epoch>0:
+                avgLoss=0
+                avgAcc=0
+                count=0
+                step=1000
+                #Calculating test set in parts, as the whole dataset doesn't fit into the memory 
+                for i in xrange(0,x_test.shape[0],step):
+                    batch_x=x_test[i:i+step,:]
+                    batch_y=y_test[i:i+step]
+                    out=sess.run([loss], feed_dict={x_pl: batch_x,y_pl: batch_y})
+                    avgLoss=avgLoss+out
+                    count=count+1
+                print ("Test set:","loss=","{:.4f}".format(avgLoss/count))
+            if epoch % FLAGS.checkpoint_freq==0 and epoch>0:
+                saver.save(sess,FLAGS.checkpoint_dir+'/siamese'+str(epoch)+'.ckpt')
     ########################
     # END OF YOUR CODE    #
     ########################
@@ -222,6 +268,7 @@ def feature_extraction():
     x_test, y_test = cifar10.test.images, cifar10.test.labels
     x_pl=tf.placeholder(tf.float32,shape=(None,x_test.shape[1],x_test.shape[2],x_test.shape[3]))
     y_pl=tf.placeholder(tf.float32,shape=(None,y_test.shape[1]))
+    batch_size=5000#to be used later for cut training dataset in pieces 
     
     print("Building the model")
     convNet=ConvNet()
@@ -230,7 +277,7 @@ def feature_extraction():
     accuracy=convNet.accuracy(pred,y_pl)
     
     #Taking intermediate layers
-    flatten = tf.get_default_graph().get_tensor_by_name("ConvNet/flatten/activation:0")
+    flatten = tf.get_default_graph().get_tensor_by_name("ConvNet/flatten/Flatten/Reshape:0")
     fc1 = tf.get_default_graph().get_tensor_by_name("ConvNet/fc1/activation:0")
     fc2 = tf.get_default_graph().get_tensor_by_name("ConvNet/fc2/activation:0")
 
@@ -241,27 +288,50 @@ def feature_extraction():
         sess.run(tf.initialize_all_variables())
 
         saver.restore(sess,check.model_checkpoint_path)
-
-        acc, flattenOut,fc1Out,fc2Out = sess.run([accuracy,flatten,fc1, fc2],feed_dict={x_pl: x_test,y_pl:y_test})
-        out = sess.run([pred],feed_dict={x_pl: x_test,y_pl:y_test})
-        print ("Test set:","accuracy=","{:.4f}".format(acc))
-    #     avgLoss=0
-    #     avgAcc=0
-    #     count=0
-    #     step=1000
-    #     #Feed forward whole test_set in batches and keep the average (gpu limitations) 
-    #     for i in xrange(0,x_test.shape[0],step):
-    #         batch_x=x_test[i:i+step]
-    #         batch_y=y_test[i:i+step]
-    #         acc=sess.run([accuracy], feed_dict={x_pl: batch_x,y_pl: batch_y})
-    #         avgAcc=avgAcc+acc
-    #         avgLoss=avgLoss+loss
-    #         count=count+1
-    #     print ("Test set:","accuracy=","{:.4f}".format(avgAcc/count))
+        # f=[n.name for n in tf.get_default_graph().as_graph_def().node]
+        # print(f)
+#########################################################################save features
+        #Save the outcome of intermediate layers 
+        flattenOut,fc1Out,fc2Out = sess.run([ flatten,fc1, fc2],feed_dict={x_pl: x_test,y_pl:y_test})
         np.save("./features/flatten.npy", flattenOut)
         np.save("./features/fc1.npy", fc1Out)
-        np.save("./features/fc2.npy", fc2Out)        
-        np.save("./features/out.npy", out)  
+        np.save("./features/fc2.npy", fc2Out)              
+        # print ("sizes",fc1Out.shape,fc2Out.shape,flattenOut.shape)
+
+        # acc,out = sess.run([accuracy,pred],feed_dict={x_pl: x_test,y_pl:y_test})
+        # print ("Test set:","accuracy=","{:.4f}".format(acc))  
+        # np.save("./features/out.npy", out)  
+#######################################################################################
+        print("Classifier started")
+        x_train, y_train = cifar10.train.images, cifar10.train.labels
+        clasFc1 = OneVsRestClassifier(SVC(kernel='linear'))
+        clasFc2 = OneVsRestClassifier(SVC(kernel='linear'))
+        clasFlatten = OneVsRestClassifier(SVC(kernel='linear'))
+
+        trainXSteps=np.array_split(x_train,x_train.shape[0]/batch_size)
+        trainYSteps=np.array_split(y_train,y_train.shape[0]/batch_size)
+        y_all=np.unique(y_train)
+        for i in xrange(len(trainXSteps)):
+            print("Training classifier step: ",i,"/",len(trainXSteps))
+            x_batch=trainXSteps[i]
+            y_batch=trainYSteps[i]
+            flattenTrain,fc1Train,fc2Train = sess.run([flatten,fc1, fc2],feed_dict={x_pl: x_batch,y_pl:y_batch})
+            # clasFlatten.partial_fit(flattenOut,y_batch,y_all)
+            # clasFc1.partial_fit(fc1Out,y_batch,y_all)
+            # clasFc2.partial_fit(fc2Out,y_batch,y_all)
+            clasFlatten.fit(flattenTrain,y_batch)
+            clasFc1.fit(fc1Train,y_batch)
+            clasFc2.fit(fc2Train,y_batch)
+
+        print("Predicting test set")
+        # outFlat=clasFlatten.predict(x_test)
+        # print (outFlat.shape)
+        outFlat=clasFlatten.score(flattenOut,y_test)
+        outFc1=clasFc1.score(fc1Out,y_test)
+        outFc2=clasFc2.score(fc2Out,y_test)
+        print("Accuracy flatten: ",outFlat)
+        print("Accuracy fc1: ",outFc1)
+        print("Accuracy fc2: ",outFc2)
 
     ########################
     # END OF YOUR CODE    #
