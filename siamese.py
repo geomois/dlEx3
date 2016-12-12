@@ -74,8 +74,6 @@ class Siamese(object):
                 layer=tf.nn.max_pool(layer,ksize=[1,3,3,1],strides=[1,2,2,1],padding='SAME')
                 tf.histogram_summary(tf.get_variable_scope().name+'/layer',layer)
 
-            # reshape = tf.reshape(layer, [384, -1])
-            # dim = reshape.get_shape()[1].value
             with tf.variable_scope("flatten"):
                 flatten=tf.contrib.layers.flatten(layer)
                 tf.histogram_summary(tf.get_variable_scope().name+"/layer",flatten,name='activation')

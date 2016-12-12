@@ -87,9 +87,10 @@ def train():
     x_test, y_test = cifar10.test.images, cifar10.test.labels
     x_pl=tf.placeholder(tf.float32,shape=(None,x_test.shape[1],x_test.shape[2],x_test.shape[3]))
     y_pl=tf.placeholder(tf.float32,shape=(None,y_test.shape[1]))
-    
+    retrainFlag=tf.placeholder(tf.bool)
+
     pool5,assign_ops=load_pretrained_VGG16_pool5(x_pl)
-    pool5=tf.stop_gradient(pool5)
+    pool5 = tf.cond(retrainFlag, lambda: pool5,lambda:tf.stop_gradient(pool5))
     fcNet=FCNet()
     pred=fcNet.inference(pool5)
     loss=fcNet.loss(pred,y_pl)
@@ -104,10 +105,15 @@ def train():
             sess.run(op)
         train_writer = tf.train.SummaryWriter(FLAGS.log_dir + '/train',sess.graph)
         test_writer = tf.train.SummaryWriter(FLAGS.log_dir + '/test',sess.graph)
-
+        print("Starting training")
         for epoch in xrange(FLAGS.max_steps +1):
             batch_x, batch_y = cifar10.train.next_batch(FLAGS.batch_size)
-            _,out,acc,merged_sum=sess.run([train_op,loss,accuracy,merged], feed_dict={x_pl: batch_x,y_pl: batch_y})
+            if FLAGS.refine_after_k >= epoch:
+                afterKBool=True
+            else:
+                afterKBool=False
+
+            _,out,acc,merged_sum=sess.run([train_op,loss,accuracy,merged], feed_dict={x_pl: batch_x,y_pl: batch_y,retrainFlag:afterKBool})
             if epoch % FLAGS.print_freq == 0:
                 train_writer.add_summary(merged_sum,epoch)
                 train_writer.flush()
@@ -130,7 +136,7 @@ def train():
                 test_writer.flush()
                 print ("Test set:","accuracy=","{:.4f}".format(avgAcc/count))
             if epoch % FLAGS.checkpoint_freq==0 and epoch>0:
-                saver.save(sess,FLAGS.checkpoint_dir+'/vgg'+str(epoch)+'.ckpt')
+                saver.save(sess,FLAGS.checkpoint_dir+'/vgg'+str(epoch)+"_ref"+str(FLAGS.refine_after_k)+'.ckpt')
     ########################
     # END OF YOUR CODE    #
     ########################

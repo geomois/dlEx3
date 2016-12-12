@@ -27,11 +27,12 @@ def plot(features,labels,path):
 def initPlot(layer="fc2",size=10,name="new"):
     y_test=np.load("./features/labels.npy")
     feat=np.load("./features/"+layer+".npy")
+    print(feat.shape)
     if len(feat.shape)>2:
         feat=feat.reshape((feat.shape[1],feat.shape[2]))
-
-    tsne = TSNE(perplexity=50, n_components=2, init='pca', n_iter=5000)
+    
+    tsne = TSNE(perplexity=30, n_components=2, init='pca', n_iter=5000)
     w=tsne.fit_transform(feat[:size,:])
     labels=np.argmax(y_test[:size],1)
-
+    print(w.shape)
     plot(w,labels,"./plots/"+layer+name+".png")

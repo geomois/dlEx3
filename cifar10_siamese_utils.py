@@ -170,6 +170,7 @@ def create_dataset(source, num_tuples=500, batch_size=128, fraction_same=0.2):
         exists=False
         while True:#emulate do..while()
             x1,x2,label=source.next_batch(batch_size,fraction_same)
+            #avoid repeating the same anchor image
             for j in xrange(len(currentList)):
                 if np.array_equal(x1[0],currentList[j]):
                     exists=True
@@ -214,8 +215,8 @@ class DataSet(object):
         for i in range(num_classes):
             self._id_list[i]=[]
             for j in range(self._num_examples):
-                label= np.argmax(self._labels[j],axis=0)
-                if i == label:
+                label=np.argmax(self._labels[j],axis=0)
+                if i==label:
                     self._id_list[i].append(j)
 
     @property
@@ -266,55 +267,46 @@ class DataSet(object):
           x1: 4D numpy array of shape [batch_size, 32, 32, 3]
           labels: numpy array of shape [batch_size]
         """
-
         ########################
         # PUT YOUR CODE HERE  #
         ########################
         x1 = np.zeros((batch_size, 32, 32, 3))
         x2 = np.zeros((batch_size, 32, 32, 3))
         labels = np.zeros((batch_size))
-        counter= 0
-
+        count= 0
         anchors = random.sample(range(0, self.num_examples), 1)
         
         for anchor in anchors:
             label = np.argmax(self._labels[anchor])
             for i in range(batch_size):
-                x1[counter] = self._images[anchor]
+                x1[count] = self._images[anchor]
                 if random.random() < fraction_same:
-                    # pick positive example
-                    # print(self._labels[anchor])
+                    #positive
                     same = np.copy(self._id_list[label])
                     del_idx = np.where(same == anchor)
-                    # delete own idx from possible candidates
+                    #avoid matching the same image
                     same = np.delete(same, del_idx)
-                    same_idx = random.sample(same, 1)
-                    # print(same_idx)
-                    x2[counter] = self._images[same_idx[0]]
-                    labels[counter] = 1
+                    sameIdx= random.sample(same, 1)
+                    x2[count] = self._images[sameIdx[0]]
+                    labels[count] = 1
                 else:
-                    # pick negative example
-                    notsamegroups = np.arange(0, self._num_classes)
-                    del_idx = np.where(notsamegroups == label)
-                    # delete own class from possible candidates
-                    notsamegroups = np.delete(notsamegroups, label)
-                    notsame_idx = random.sample(
-                        notsamegroups, 1)  # get candidate class
-
-                    # get image group at candidate class
-                    notsame_group = self._id_list[notsame_idx[0]]
-                    # get image id randomly
-                    image_idx = random.sample(notsame_group, 1)
-                    x2[counter] = self._images[image_idx[0]]
-                    labels[counter] = 0
-                counter += 1
+                    #negative
+                    diffGroups = np.arange(0, self._num_classes)
+                    del_idx = np.where(diffGroups == label)
+                    diffGroups = np.delete(diffGroups, label)
+                    diffIdx = random.sample(diffGroups, 1)
+                    #group of chosen class
+                    diffGroup = self._id_list[diffIdx[0]]
+                    imIdx = random.sample(diffGroup, 1)
+                    x2[count] = self._images[imIdx[0]]
+                    labels[count] = 0
+                count=count+1
 
         ########################
         # END OF YOUR CODE    #
         ########################
 
         return x1, x2, labels
-
 
 def read_data_sets(data_dir, one_hot=True, validation_size=0):
     """
