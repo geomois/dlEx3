@@ -85,7 +85,7 @@ def train():
     cifar10 = cifar10_utils.get_cifar10(FLAGS.data_dir)
     
     x_test, y_test = cifar10.test.images, cifar10.test.labels
-    x_pl=tf.placeholder(tf.float32,shape=(None,x_test.shape[1],x_test.shape[2],x_test.shape[3]))
+    x_pl=tf.placeholder(tf.float32,shape=(None,None,None,x_test.shape[3]))
     y_pl=tf.placeholder(tf.float32,shape=(None,y_test.shape[1]))
     retrainFlag=tf.placeholder(tf.bool)
 
@@ -109,10 +109,10 @@ def train():
         for epoch in xrange(FLAGS.max_steps +1):
             batch_x, batch_y = cifar10.train.next_batch(FLAGS.batch_size)
             if FLAGS.refine_after_k >= epoch:
-                afterKBool=True
-            else:
                 afterKBool=False
-
+            else:
+                afterKBool=True
+            # print("kBool",afterKBool)
             _,out,acc,merged_sum=sess.run([train_op,loss,accuracy,merged], feed_dict={x_pl: batch_x,y_pl: batch_y,retrainFlag:afterKBool})
             if epoch % FLAGS.print_freq == 0:
                 train_writer.add_summary(merged_sum,epoch)
@@ -128,7 +128,7 @@ def train():
                 for i in xrange(0,x_test.shape[0],step):
                     batch_x=x_test[i:i+step,:]
                     batch_y=y_test[i:i+step]
-                    out,acc,merged_sum_test=sess.run([loss,accuracy,merged], feed_dict={x_pl: batch_x,y_pl: batch_y})
+                    out,acc,merged_sum_test=sess.run([loss,accuracy,merged], feed_dict={x_pl: batch_x,y_pl: batch_y,retrainFlag:False})
                     avgAcc=avgAcc+acc
                     avgLoss=avgLoss+out
                     count=count+1

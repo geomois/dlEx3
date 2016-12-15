@@ -148,13 +148,24 @@ class Siamese(object):
         ########################
         # PUT YOUR CODE HERE  #
         ########################
-        # batch_size=
         with tf.name_scope("contrastive_loss"):
-            d = tf.reduce_sum(tf.pow(tf.sub(channel_1,channel_2),2),1)#keep_dims=True
-            dSqRoot=tf.sqrt(d)
-            loss = label * tf.square(tf.maximum(0., margin - dSqRoot)) + (1 - label) * d
-            loss=tf.reduce_sum(loss)/batch_size/2
+            # d = tf.reduce_sum(tf.pow(tf.sub(channel_1,channel_2),2),1)#keep_dims=True
+            # dSqRoot=tf.sqrt(d)
+            # loss = label * tf.square(tf.maximum(0., margin - dSqRoot)) + (1 - label) * d
+            # loss=tf.reduce_sum(loss)/batch_size/2
             # loss=tf.reduce_sum(loss)
+
+
+            # d = tf.reduce_sum(tf.pow(tf.sub(channel_1,channel_2),2),1)#keep_dims=True
+            # # dSqRoot=tf.sqrt(d)
+            # loss = label * d+ tf.maximum(0., margin - d) + (1 - label) 
+            # # loss=tf.reduce_sum(loss)/batch_size/2
+            # loss=tf.reduce_sum(loss)/2
+
+            d= tf.reduce_sum(tf.square(tf.sub(channel_1, channel_2)), 1)
+            loss = tf.mul(label, d) + \
+               tf.mul(tf.sub(1., label),tf.maximum(tf.sub(margin, d), 0.))
+            loss = tf.mul(0.5,tf.reduce_mean(loss))
         ########################
         # END OF YOUR CODE    #
         ########################

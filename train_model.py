@@ -257,7 +257,7 @@ def feature_extraction(model="linear"):
     ########################
     # PUT YOUR CODE HERE  #
     ########################
-    batch_size=1000 #to be used later for cut training dataset in pieces
+    batch_size=500 #to be used later for cut training dataset in pieces
     cifar10 = cifar10_utils.get_cifar10(FLAGS.data_dir)
     x_test, y_test = cifar10.test.images, cifar10.test.labels
     x_pl=tf.placeholder(tf.float32,shape=(None,x_test.shape[1],x_test.shape[2],x_test.shape[3]))
@@ -280,21 +280,28 @@ def feature_extraction(model="linear"):
         pred2=siamNet.inference(x_pl2,reuse=True)
         loss=siamNet.loss(pred1,pred2,y_pl,0.1,batch_size_pl)
     elif model=="vgg":
+        retrainFlag=tf.placeholder(tf.bool)
+        x_pl=tf.placeholder(tf.float32,shape=(None,None,None,x_test.shape[3]))
         pool5,assign_ops=load_pretrained_VGG16_pool5(x_pl)
-        pool5=tf.stop_gradient(pool5)
+        pool5 = tf.cond(retrainFlag, lambda: pool5,lambda:tf.stop_gradient(pool5))
         fcNet=FCNet()
         pred=fcNet.inference(pool5)
         loss=fcNet.loss(pred,y_pl)
-        x_test=x_test[:1000]
-        y_test=y_test[:1000]
+        # accuracy=fcNet.accuracy(pred,y_pl)
+        # x_test=x_test[:1000]
+        # y_test=y_test[:1000]
+    
 
     #Taking intermediate layers
-    flatten = tf.get_default_graph().get_tensor_by_name("ConvNet/flatten/Flatten/Reshape:0")
-    fc1 = tf.get_default_graph().get_tensor_by_name("ConvNet/fc1/activation:0")
-    fc2 = tf.get_default_graph().get_tensor_by_name("ConvNet/fc2/activation:0")
 
     if model=="siamese":
         l2=tf.get_default_graph().get_tensor_by_name("ConvNet/l2_norm/outNorm:0")
+    elif model=="vgg":
+        pool=tf.get_default_graph().get_tensor_by_name("vgg/pool5:0")
+    else:
+        flatten = tf.get_default_graph().get_tensor_by_name("ConvNet/flatten/Flatten/Reshape:0")
+        fc1 = tf.get_default_graph().get_tensor_by_name("ConvNet/fc1/activation:0")
+        fc2 = tf.get_default_graph().get_tensor_by_name("ConvNet/fc2/activation:0")
 
     with tf.Session() as sess:
         saver = tf.train.Saver(tf.all_variables())
@@ -314,16 +321,22 @@ def feature_extraction(model="linear"):
             # x_test2=np.vstack([seq[1] for seq in dSet[:]])
             # y_test=np.hstack([seq[2] for seq in dSet[:]])
             # l2Out= sess.run([l2],feed_dict={x_pl: x_test1,x_pl2:x_test2,y_pl:y_test,batch_size_pl:y_test.shape[0]})
-            l2Out= sess.run([l2],feed_dict={x_pl: x_test})
+            l2Out= sess.run([l2],feed_dict={x_pl: x_test})            
+            np.save("./features/"+model+"-l2.npy",l2Out[0])
+        elif model=="vgg":
+            step=1000
+            for i in xrange(0,x_test.shape[0],step):
+                batch_x=x_test[i:i+step,:]
+                batch_y=y_test[i:i+step]
+                pool5Out=sess.run([pool5], feed_dict={x_pl: batch_x,y_pl: batch_y,retrainFlag:False})
+                # print("pool ",pool5Out[0].shape)
+                np.save("./features/"+model+"_step_"+str(i)+".npy", np.reshape(pool5Out[0],(pool5Out[0].shape[0],pool5Out[0].shape[3])))
+                print("extracted")
         else:
             flattenOut,fc1Out,fc2Out = sess.run([flatten,fc1,fc2],feed_dict={x_pl: x_test,y_pl:y_test})
-            
-        if model=="siamese":
-            np.save("./features/"+model+"-l2.npy",l2Out[0])
-        else:
             np.save("./features/"+model+"-flatten.npy", flattenOut)
             np.save("./features/"+model+"-fc1.npy", fc1Out)
-            np.save("./features/"+model+"-fc2.npy", fc2Out)        
+            np.save("./features/"+model+"-fc2.npy", fc2Out)  
         # print ("sizes",fc1Out.shape,fc2Out.shape,flattenOut.shape)
 
         # acc,out = sess.run([accuracy,pred],feed_dict={x_pl: x_test,y_pl:y_test})
@@ -334,6 +347,8 @@ def feature_extraction(model="linear"):
         x_train, y_train = cifar10.train.images, cifar10.train.labels
         if model=="siamese":
             clasSiam=OneVsRestClassifier(SVC(kernel='linear'))
+        elif model=="vgg":
+            clasVgg=OneVsRestClassifier(SVC(kernel='linear'))
         else:
             clasFc1 = OneVsRestClassifier(SVC(kernel='linear'))
             clasFc2 = OneVsRestClassifier(SVC(kernel='linear'))
@@ -347,30 +362,38 @@ def feature_extraction(model="linear"):
             x_batch=trainXSteps[i]
             y_batch=trainYSteps[i]
             if model=="vgg":
-                flattenTrain,fc1Train,fc2Train = sess.run([flatten,fc1, fc2],feed_dict={x_pl: x_batch,y_pl:y_batch})
+                poolTrain = sess.run([pool],feed_dict={x_pl: x_batch,y_pl:y_batch})
+                # clasVgg.fit(np.reshape(poolTrain[0]),y_batch)
+                clasVgg.fit(np.reshape(poolTrain[0],(batch_size,512)),y_batch)
             elif model=="linear":
                 flattenTrain,fc1Train,fc2Train = sess.run([flatten,fc1, fc2],feed_dict={x_pl: x_batch,y_pl:y_batch})
-            elif model=="siamese":
-                l2Train= sess.run([l2],feed_dict={x_pl: x_batch})
-            
-            if model=="siamese":
-                clasSiam.fit(l2Train[0],y_batch)
-            else:
                 clasFlatten.fit(flattenTrain,y_batch)
                 clasFc1.fit(fc1Train,y_batch)
                 clasFc2.fit(fc2Train,y_batch)
-            if i == 5:
-                break
+            elif model=="siamese":
+                l2Train= sess.run([l2],feed_dict={x_pl: x_batch})
+                clasSiam.fit(l2Train[0],y_batch)
             
 
         print("Predicting test set")
         if model=="siamese":
             outL2=clasSiam.score(l2Out[0],y_test)
             print("Accuracy l2: ",outL2)
+        elif model=="vgg":
+            step=1000
+            outPool=0
+            count=0
+            for i in xrange(0,x_test.shape[0],step):
+                batch_x=x_test[i:i+step,:]
+                batch_y=y_test[i:i+step]
+                pool5Out=sess.run([pool5], feed_dict={x_pl: batch_x,y_pl: batch_y,retrainFlag:False})
+                outPool+=clasVgg.score(np.reshape(pool5Out[0],(pool5Out[0].shape[0],pool5Out[0].shape[3])),batch_y)
+                count+=1
+            print("Accuracy: ",outPool/count)
         else:
-            outFlat=clasFlatten.score(flattenOut,y_test[:1000])
-            outFc1=clasFc1.score(fc1Out,y_test[:1000])
-            outFc2=clasFc2.score(fc2Out,y_test[:1000])
+            outFlat=clasFlatten.score(flattenOut,y_test)
+            outFc1=clasFc1.score(fc1Out,y_test)
+            outFc2=clasFc2.score(fc2Out,y_test)
             print("Accuracy flatten: ",outFlat)
             print("Accuracy fc1: ",outFc1)
             print("Accuracy fc2: ",outFc2)

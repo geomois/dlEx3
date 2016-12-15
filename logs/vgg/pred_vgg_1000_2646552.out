@@ -1,0 +1,127 @@
+is_train : 
+data_dir : ./cifar10/cifar-10-batches-py
+eval_freq : 1000
+learning_rate : 0.0001
+print_freq : 10
+batch_size : 128
+checkpoint_dir : ./checkpoints
+log_dir : ./logs/cifar10
+train_model : vgg
+checkpoint_freq : 5000
+max_steps : 15000
+Building the  vgg  model
+pool5.shape: (?, ?, ?, 512)
+Extracting features
+extracted
+extracted
+extracted
+extracted
+extracted
+extracted
+extracted
+extracted
+extracted
+extracted
+Classifier started
+Training classifier step:  0 / 100
+Training classifier step:  1 / 100
+Training classifier step:  2 / 100
+Training classifier step:  3 / 100
+Training classifier step:  4 / 100
+Training classifier step:  5 / 100
+Training classifier step:  6 / 100
+Training classifier step:  7 / 100
+Training classifier step:  8 / 100
+Training classifier step:  9 / 100
+Training classifier step:  10 / 100
+Training classifier step:  11 / 100
+Training classifier step:  12 / 100
+Training classifier step:  13 / 100
+Training classifier step:  14 / 100
+Training classifier step:  15 / 100
+Training classifier step:  16 / 100
+Training classifier step:  17 / 100
+Training classifier step:  18 / 100
+Training classifier step:  19 / 100
+Training classifier step:  20 / 100
+Training classifier step:  21 / 100
+Training classifier step:  22 / 100
+Training classifier step:  23 / 100
+Training classifier step:  24 / 100
+Training classifier step:  25 / 100
+Training classifier step:  26 / 100
+Training classifier step:  27 / 100
+Training classifier step:  28 / 100
+Training classifier step:  29 / 100
+Training classifier step:  30 / 100
+Training classifier step:  31 / 100
+Training classifier step:  32 / 100
+Training classifier step:  33 / 100
+Training classifier step:  34 / 100
+Training classifier step:  35 / 100
+Training classifier step:  36 / 100
+Training classifier step:  37 / 100
+Training classifier step:  38 / 100
+Training classifier step:  39 / 100
+Training classifier step:  40 / 100
+Training classifier step:  41 / 100
+Training classifier step:  42 / 100
+Training classifier step:  43 / 100
+Training classifier step:  44 / 100
+Training classifier step:  45 / 100
+Training classifier step:  46 / 100
+Training classifier step:  47 / 100
+Training classifier step:  48 / 100
+Training classifier step:  49 / 100
+Training classifier step:  50 / 100
+Training classifier step:  51 / 100
+Training classifier step:  52 / 100
+Training classifier step:  53 / 100
+Training classifier step:  54 / 100
+Training classifier step:  55 / 100
+Training classifier step:  56 / 100
+Training classifier step:  57 / 100
+Training classifier step:  58 / 100
+Training classifier step:  59 / 100
+Training classifier step:  60 / 100
+Training classifier step:  61 / 100
+Training classifier step:  62 / 100
+Training classifier step:  63 / 100
+Training classifier step:  64 / 100
+Training classifier step:  65 / 100
+Training classifier step:  66 / 100
+Training classifier step:  67 / 100
+Training classifier step:  68 / 100
+Training classifier step:  69 / 100
+Training classifier step:  70 / 100
+Training classifier step:  71 / 100
+Training classifier step:  72 / 100
+Training classifier step:  73 / 100
+Training classifier step:  74 / 100
+Training classifier step:  75 / 100
+Training classifier step:  76 / 100
+Training classifier step:  77 / 100
+Training classifier step:  78 / 100
+Training classifier step:  79 / 100
+Training classifier step:  80 / 100
+Training classifier step:  81 / 100
+Training classifier step:  82 / 100
+Training classifier step:  83 / 100
+Training classifier step:  84 / 100
+Training classifier step:  85 / 100
+Training classifier step:  86 / 100
+Training classifier step:  87 / 100
+Training classifier step:  88 / 100
+Training classifier step:  89 / 100
+Training classifier step:  90 / 100
+Training classifier step:  91 / 100
+Training classifier step:  92 / 100
+Training classifier step:  93 / 100
+Training classifier step:  94 / 100
+Training classifier step:  95 / 100
+Training classifier step:  96 / 100
+Training classifier step:  97 / 100
+Training classifier step:  98 / 100
+Training classifier step:  99 / 100
+Predicting test set
+Accuracy:  0.8187

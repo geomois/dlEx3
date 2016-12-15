@@ -1,0 +1,168 @@
+data_dir : ./cifar10/cifar-10-batches-py
+eval_freq : 3000
+learning_rate : 0.0001
+print_freq : 100
+batch_size : 128
+refine_after_k : 2500
+checkpoint_dir : ./checkpoints
+log_dir : ./logs/cifar10
+checkpoint_freq : 5000
+max_steps : 15000
+pool5.shape: (?, ?, ?, 512)
+Starting training
+Epoch: 00000 loss= 10.5595 accuracy= 0.1094
+Epoch: 00100 loss= 3.1912 accuracy= 0.4766
+Epoch: 00200 loss= 2.7925 accuracy= 0.4375
+Epoch: 00300 loss= 2.4226 accuracy= 0.5234
+Epoch: 00400 loss= 1.7416 accuracy= 0.5547
+Epoch: 00500 loss= 2.1412 accuracy= 0.4688
+Epoch: 00600 loss= 1.9628 accuracy= 0.5156
+Epoch: 00700 loss= 1.4505 accuracy= 0.5547
+Epoch: 00800 loss= 1.5646 accuracy= 0.6172
+Epoch: 00900 loss= 1.4435 accuracy= 0.5703
+Epoch: 01000 loss= 1.5061 accuracy= 0.5703
+Epoch: 01100 loss= 1.5184 accuracy= 0.5781
+Epoch: 01200 loss= 0.9609 accuracy= 0.6484
+Epoch: 01300 loss= 0.8596 accuracy= 0.7344
+Epoch: 01400 loss= 1.1595 accuracy= 0.6484
+Epoch: 01500 loss= 1.4843 accuracy= 0.5547
+Epoch: 01600 loss= 0.9842 accuracy= 0.7031
+Epoch: 01700 loss= 1.1639 accuracy= 0.6250
+Epoch: 01800 loss= 0.7488 accuracy= 0.7031
+Epoch: 01900 loss= 0.7757 accuracy= 0.7031
+Epoch: 02000 loss= 0.8992 accuracy= 0.6953
+Epoch: 02100 loss= 0.7782 accuracy= 0.7422
+Epoch: 02200 loss= 0.9143 accuracy= 0.7344
+Epoch: 02300 loss= 0.8051 accuracy= 0.7188
+Epoch: 02400 loss= 0.7633 accuracy= 0.7891
+Epoch: 02500 loss= 0.8099 accuracy= 0.7500
+Epoch: 02600 loss= 2.2157 accuracy= 0.1875
+Epoch: 02700 loss= 1.9467 accuracy= 0.2969
+Epoch: 02800 loss= 1.8029 accuracy= 0.3438
+Epoch: 02900 loss= 1.3752 accuracy= 0.4922
+Epoch: 03000 loss= 1.1832 accuracy= 0.5547
+Test set: accuracy= 0.5222
+Epoch: 03100 loss= 1.2391 accuracy= 0.5625
+Epoch: 03200 loss= 0.8437 accuracy= 0.6953
+Epoch: 03300 loss= 0.9338 accuracy= 0.6016
+Epoch: 03400 loss= 0.8851 accuracy= 0.6797
+Epoch: 03500 loss= 0.6642 accuracy= 0.7656
+Epoch: 03600 loss= 0.5988 accuracy= 0.7656
+Epoch: 03700 loss= 0.6414 accuracy= 0.7891
+Epoch: 03800 loss= 0.5719 accuracy= 0.7891
+Epoch: 03900 loss= 0.6111 accuracy= 0.7969
+Epoch: 04000 loss= 0.5260 accuracy= 0.8594
+Epoch: 04100 loss= 0.6113 accuracy= 0.7969
+Epoch: 04200 loss= 0.3953 accuracy= 0.8594
+Epoch: 04300 loss= 0.4592 accuracy= 0.8125
+Epoch: 04400 loss= 0.3935 accuracy= 0.8281
+Epoch: 04500 loss= 0.4729 accuracy= 0.8438
+Epoch: 04600 loss= 0.5666 accuracy= 0.8281
+Epoch: 04700 loss= 0.2316 accuracy= 0.9141
+Epoch: 04800 loss= 0.1489 accuracy= 0.9375
+Epoch: 04900 loss= 0.4862 accuracy= 0.8125
+Epoch: 05000 loss= 0.3565 accuracy= 0.8906
+Epoch: 05100 loss= 0.1956 accuracy= 0.9297
+Epoch: 05200 loss= 0.2759 accuracy= 0.9062
+Epoch: 05300 loss= 0.2627 accuracy= 0.8984
+Epoch: 05400 loss= 0.3919 accuracy= 0.8828
+Epoch: 05500 loss= 0.1419 accuracy= 0.9375
+Epoch: 05600 loss= 0.1131 accuracy= 0.9453
+Epoch: 05700 loss= 0.1269 accuracy= 0.9609
+Epoch: 05800 loss= 0.2701 accuracy= 0.9297
+Epoch: 05900 loss= 0.2638 accuracy= 0.9141
+Epoch: 06000 loss= 0.1295 accuracy= 0.9531
+Test set: accuracy= 0.8271
+Epoch: 06100 loss= 0.3375 accuracy= 0.8828
+Epoch: 06200 loss= 0.1324 accuracy= 0.9609
+Epoch: 06300 loss= 0.1529 accuracy= 0.9688
+Epoch: 06400 loss= 0.0755 accuracy= 0.9688
+Epoch: 06500 loss= 0.0897 accuracy= 0.9609
+Epoch: 06600 loss= 0.1018 accuracy= 0.9609
+Epoch: 06700 loss= 0.0239 accuracy= 1.0000
+Epoch: 06800 loss= 0.0879 accuracy= 0.9688
+Epoch: 06900 loss= 0.2304 accuracy= 0.9141
+Epoch: 07000 loss= 0.0631 accuracy= 0.9844
+Epoch: 07100 loss= 0.0592 accuracy= 0.9766
+Epoch: 07200 loss= 0.0947 accuracy= 0.9766
+Epoch: 07300 loss= 0.1388 accuracy= 0.9766
+Epoch: 07400 loss= 0.0154 accuracy= 1.0000
+Epoch: 07500 loss= 0.0681 accuracy= 0.9844
+Epoch: 07600 loss= 0.0597 accuracy= 0.9766
+Epoch: 07700 loss= 0.1456 accuracy= 0.9531
+Epoch: 07800 loss= 0.0614 accuracy= 0.9766
+Epoch: 07900 loss= 0.0371 accuracy= 0.9844
+Epoch: 08000 loss= 0.0584 accuracy= 0.9844
+Epoch: 08100 loss= 0.0632 accuracy= 0.9766
+Epoch: 08200 loss= 0.1566 accuracy= 0.9688
+Epoch: 08300 loss= 0.0561 accuracy= 0.9688
+Epoch: 08400 loss= 0.0245 accuracy= 0.9922
+Epoch: 08500 loss= 0.0892 accuracy= 0.9688
+Epoch: 08600 loss= 0.0055 accuracy= 1.0000
+Epoch: 08700 loss= 0.0226 accuracy= 0.9844
+Epoch: 08800 loss= 0.0253 accuracy= 1.0000
+Epoch: 08900 loss= 0.0785 accuracy= 0.9609
+Epoch: 09000 loss= 0.0094 accuracy= 1.0000
+Test set: accuracy= 0.8428
+Epoch: 09100 loss= 0.0209 accuracy= 0.9844
+Epoch: 09200 loss= 0.0257 accuracy= 0.9922
+Epoch: 09300 loss= 0.0711 accuracy= 0.9844
+Epoch: 09400 loss= 0.0098 accuracy= 1.0000
+Epoch: 09500 loss= 0.0354 accuracy= 0.9844
+Epoch: 09600 loss= 0.0754 accuracy= 0.9922
+Epoch: 09700 loss= 0.0053 accuracy= 1.0000
+Epoch: 09800 loss= 0.0434 accuracy= 0.9922
+Epoch: 09900 loss= 0.0522 accuracy= 0.9844
+Epoch: 10000 loss= 0.0126 accuracy= 1.0000
+Epoch: 10100 loss= 0.0152 accuracy= 0.9922
+Epoch: 10200 loss= 0.0239 accuracy= 0.9844
+Epoch: 10300 loss= 0.0186 accuracy= 1.0000
+Epoch: 10400 loss= 0.0063 accuracy= 1.0000
+Epoch: 10500 loss= 0.0356 accuracy= 0.9844
+Epoch: 10600 loss= 0.0086 accuracy= 1.0000
+Epoch: 10700 loss= 0.1388 accuracy= 0.9688
+Epoch: 10800 loss= 0.0120 accuracy= 0.9922
+Epoch: 10900 loss= 0.0328 accuracy= 0.9922
+Epoch: 11000 loss= 0.0260 accuracy= 0.9922
+Epoch: 11100 loss= 0.0210 accuracy= 0.9922
+Epoch: 11200 loss= 0.0030 accuracy= 1.0000
+Epoch: 11300 loss= 0.0690 accuracy= 0.9844
+Epoch: 11400 loss= 0.0124 accuracy= 0.9922
+Epoch: 11500 loss= 0.0046 accuracy= 1.0000
+Epoch: 11600 loss= 0.0631 accuracy= 0.9688
+Epoch: 11700 loss= 0.0038 accuracy= 1.0000
+Epoch: 11800 loss= 0.0056 accuracy= 1.0000
+Epoch: 11900 loss= 0.0284 accuracy= 0.9844
+Epoch: 12000 loss= 0.0246 accuracy= 0.9922
+Test set: accuracy= 0.8371
+Epoch: 12100 loss= 0.0193 accuracy= 0.9922
+Epoch: 12200 loss= 0.0133 accuracy= 1.0000
+Epoch: 12300 loss= 0.0848 accuracy= 0.9688
+Epoch: 12400 loss= 0.0675 accuracy= 0.9766
+Epoch: 12500 loss= 0.0056 accuracy= 1.0000
+Epoch: 12600 loss= 0.0454 accuracy= 0.9844
+Epoch: 12700 loss= 0.0022 accuracy= 1.0000
+Epoch: 12800 loss= 0.0101 accuracy= 1.0000
+Epoch: 12900 loss= 0.0487 accuracy= 0.9844
+Epoch: 13000 loss= 0.0272 accuracy= 0.9922
+Epoch: 13100 loss= 0.0109 accuracy= 1.0000
+Epoch: 13200 loss= 0.0397 accuracy= 0.9922
+Epoch: 13300 loss= 0.0126 accuracy= 0.9922
+Epoch: 13400 loss= 0.0232 accuracy= 0.9922
+Epoch: 13500 loss= 0.0132 accuracy= 0.9922
+Epoch: 13600 loss= 0.0149 accuracy= 0.9922
+Epoch: 13700 loss= 0.0357 accuracy= 0.9844
+Epoch: 13800 loss= 0.0384 accuracy= 0.9766
+Epoch: 13900 loss= 0.0137 accuracy= 0.9922
+Epoch: 14000 loss= 0.0387 accuracy= 0.9844
+Epoch: 14100 loss= 0.0019 accuracy= 1.0000
+Epoch: 14200 loss= 0.0172 accuracy= 0.9922
+Epoch: 14300 loss= 0.0548 accuracy= 0.9922
+Epoch: 14400 loss= 0.0184 accuracy= 0.9922
+Epoch: 14500 loss= 0.1539 accuracy= 0.9844
+Epoch: 14600 loss= 0.0527 accuracy= 0.9844
+Epoch: 14700 loss= 0.0066 accuracy= 1.0000
+Epoch: 14800 loss= 0.0055 accuracy= 1.0000
+Epoch: 14900 loss= 0.0300 accuracy= 0.9922
+Epoch: 15000 loss= 0.0016 accuracy= 1.0000
+Test set: accuracy= 0.8393

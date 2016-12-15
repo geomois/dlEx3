@@ -275,7 +275,7 @@ def load_pretrained_VGG16_pool5(input, scope_name='vgg'):
                                strides=[1, 2, 2, 1],
                                padding='SAME',
                                name='pool5')
-        # print("pool5.shape: %s" % pool5.get_shape())
+        print("pool5.shape: %s" % pool5.get_shape())
 
     return pool5, assign_ops
 
@@ -295,7 +295,8 @@ class FCNet(object):
             ########################
             # print ("x", x.get_shape())
             with tf.variable_scope("flatten"):
-                flatten=tf.contrib.layers.flatten(x)
+                flatten = tf.reshape(x, [-1, 512])
+                # flatten=tf.contrib.layers.flatten(x)
                 tf.histogram_summary(tf.get_variable_scope().name+"/layer",flatten)
 
             with tf.variable_scope("fc1"):
